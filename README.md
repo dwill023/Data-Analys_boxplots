@@ -4,4 +4,4 @@ A good way to compare between samples from a Next-generation sequencing (NGS) ru
 
 An example of box-plots generated with [plotly](https://plotly.com/) can be seen here:
 
-![plotly](https://github.com/dwill023/Data-Analys_boxplots/blob/main/images/alpl.png)
+![](/images/alpl.png)
