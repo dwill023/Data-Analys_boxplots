@@ -1,0 +1,57 @@
+---
+title: "RPKM boxolots for RNA-seq"
+output: html_notebook
+---
+
+The two-samples t-test can be used to compare the mean of two independent groups. 
+
+A box plot is first generated from the count data normalized by RPKM. The two way comparison is made between the reference (control sample) and the other sample.
+
+```{r Read in dataframe}
+my_data <- read.csv(file.choose())
+
+# Transform the my_data in a long format, by grouping all the column variables
+my_data <- as_tibble(my_data)
+
+my_data_long <- my_data %>% 
+  pivot_longer(-Gene, names_to = "Sample", values_to = "RPKM")
+
+
+my_data_long$Sample[my_data_long$Sample %in% c("Control_1", "Control_2", "Control_3")] <- c("Control")
+head(my_data_long)
+```
+### Calculate the significance 
+Store the table as a reference for the graph. The Benjamini-Hochberg Procedure (BH) is used to correct for Type I errors (false positives).
+
+```{r Significance table}
+require(ggpubr)
+
+sample_stats <- compare_means(RPKM ~ Sample, data = my_data, group.by = "Gene", ref.group = "Control", method = "t.test", p.adjust.method = "BH" )
+
+sample_stats
+write.csv(sample_stats, "RPKM_tTest.csv")
+```
+
+### Graph the data
+Make boxplots for genes with similar RPKM values. This helps to group the similar gene expressions together and scales the y-axis for better viewing. 
+
+A key to the symbols in the graph:
+- Dot in the middle of the box is the mean of the data
+- ns  : p > 0.05
+- *   : P <= 0.05
+- **  : p <= 0.01
+- *** : p <= 0.001
+- ****: p <= 0.0001
+```{r Boxplot}
+# Visualize
+
+genes <- my_data[c(1:14, 197:210, 267:280),] # if you want to display only certain genes.
+
+p <- ggboxplot(genes, x="Sample", y="RPKM", color = "Sample", bxp.errorbar = TRUE, facet.by = "Gene", 
+               order = c("Control", "miR361s", "miR361f", "Prickle1&2", "REST"),
+               legend = "none", add = "mean", ggtheme = theme_bw()) + 
+  rotate_x_text(angle = 45)
+
+p + stat_compare_means(method = "t.test", label = "p.signif", ref.group = "Control")
+```
+
